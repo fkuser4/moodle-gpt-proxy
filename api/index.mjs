@@ -59,7 +59,7 @@ export default async (req, res) => {
           vector_store_ids: [VECTOR_STORE_ID],
         },
       ],
-      reasoning: { effort: body.effort || 'minimal' },
+      reasoning: { effort: body.effort || 'low' },
     };
 
     const r = await fetch('https://api.openai.com/v1/responses', {
