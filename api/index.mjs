@@ -1,5 +1,3 @@
-export const config = { runtime: 'edge' };
-
 export default async (req) => {
   const cors = {
     'Access-Control-Allow-Origin': '*',
@@ -26,14 +24,20 @@ export default async (req) => {
 
     const data = await openai.json();
 
-    return Response.json(data, {
+    return new Response(JSON.stringify(data), {
       status: openai.status,
-      headers: cors,
+      headers: {
+        ...cors,
+        'Content-Type': 'application/json',
+      },
     });
   } catch (e) {
-    return Response.json({ error: e.message }, {
+    return new Response(JSON.stringify({ error: e.message }), {
       status: 500,
-      headers: cors,
+      headers: {
+        ...cors,
+        'Content-Type': 'application/json',
+      },
     });
   }
 };
