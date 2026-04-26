@@ -7,30 +7,47 @@ const VECTOR_STORE_ID = 'vs_69ee9e6da368819194bc334b05216d80';
 
 const SYSTEM = `Ti si Moodle solver. Imaš pristup materijalima preko file_search alata — uvijek prvo provjeri njih. Ako odgovor nije pokriven materijalima, razmišljaj sam i odgovori najbolje. Output ISKLJUČIVO izvršivi JavaScript kod koji rješava pitanje (klika točne radio buttone, popunjava input polja, itd.). BEZ markdowna, BEZ \`\`\` fences, BEZ objašnjenja, BEZ komentara — samo čisti JS.`;
 
-const cors = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+const setCors = (res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 };
 
-const json = (status, data) =>
-  new Response(JSON.stringify(data), {
-    status,
-    headers: { ...cors, 'Content-Type': 'application/json' },
+const send = (res, status, data) => {
+  setCors(res);
+  res.setHeader('Content-Type', 'application/json');
+  res.statusCode = status;
+  res.end(JSON.stringify(data));
+};
+
+const readJson = (req) =>
+  new Promise((resolve, reject) => {
+    let buf = '';
+    req.on('data', (chunk) => (buf += chunk));
+    req.on('end', () => {
+      try {
+        resolve(buf ? JSON.parse(buf) : {});
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', reject);
   });
 
-export default async (req) => {
+export default async (req, res) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: cors });
+    setCors(res);
+    res.statusCode = 204;
+    return res.end();
   }
 
   try {
-    const auth = req.headers.get('authorization');
-    if (!auth) return json(401, { error: 'Missing Authorization header' });
+    const auth = req.headers['authorization'];
+    if (!auth) return send(res, 401, { error: 'Missing Authorization header' });
 
-    const body = await req.json();
+    const body = await readJson(req);
     const { question, model = 'gpt-5.4' } = body;
-    if (!question) return json(400, { error: 'Missing question' });
+    if (!question) return send(res, 400, { error: 'Missing question' });
 
     const payload = {
       model,
@@ -56,7 +73,7 @@ export default async (req) => {
 
     const data = await r.json();
 
-    if (!r.ok) return json(r.status, { error: data });
+    if (!r.ok) return send(res, r.status, { error: data });
 
     let code = data.output_text || '';
     if (!code && Array.isArray(data.output)) {
@@ -74,8 +91,8 @@ export default async (req) => {
       .replace(/\n?```$/i, '')
       .trim();
 
-    return json(200, { code, usage: data.usage });
+    return send(res, 200, { code, usage: data.usage });
   } catch (e) {
-    return json(500, { error: e.message });
+    return send(res, 500, { error: e.message });
   }
 };
