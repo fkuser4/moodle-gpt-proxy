@@ -1,0 +1,6 @@
+node_modules
+.env
+.env.local
+.idea
+.DS_Store
+bookmarklet.min.js

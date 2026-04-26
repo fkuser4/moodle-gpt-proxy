@@ -1,3 +1,9 @@
 {
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "upload": "node scripts/upload-knowledge.mjs"
+  },
+  "dependencies": {
+    "openai": "^4.104.0"
+  }
 }
