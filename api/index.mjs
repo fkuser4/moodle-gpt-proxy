@@ -1,3 +1,7 @@
+export const config = {
+  runtime: 'edge',
+};
+
 export default async (req) => {
   const cors = {
     'Access-Control-Allow-Origin': '*',
@@ -35,6 +39,12 @@ export default async (req) => {
     return new Response(JSON.stringify({ error: e.message }), {
       status: 500,
       headers: {
+        ...cors,
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+};      headers: {
         ...cors,
         'Content-Type': 'application/json',
       },
