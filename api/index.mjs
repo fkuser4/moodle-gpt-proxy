@@ -1,23 +1,21 @@
-export const config = {
-  runtime: 'edge',
-};
+export const config = { runtime: 'edge' };
 
-export default async function handler(request) {
-  const corsHeaders = {
+export default async (req) => {
+  const cors = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
   };
 
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: cors });
   }
 
   try {
-    const body = await request.json();
-    const auth = request.headers.get('authorization');
+    const auth = req.headers.get('authorization');
+    const body = await req.json();
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    const openai = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -26,22 +24,16 @@ export default async function handler(request) {
       body: JSON.stringify(body),
     });
 
-    const data = await response.json();
+    const data = await openai.json();
 
-    return new Response(JSON.stringify(data), {
-      status: response.status,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json',
-      },
+    return Response.json(data, {
+      status: openai.status,
+      headers: cors,
     });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), {
+  } catch (e) {
+    return Response.json({ error: e.message }, {
       status: 500,
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json',
-      },
+      headers: cors,
     });
   }
-}
+};
